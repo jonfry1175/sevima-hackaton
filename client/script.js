@@ -4,15 +4,15 @@ import user from './assets/user.svg';
 const form = document.querySelector('form');
 const chatContainer = document.querySelector('#chat_container');
 
-let loadInterval;
+let loadInterval
 
 function loader(element) {
-  element.textContent = '';
+  element.textContent = ''
 
   loadInterval = setInterval(() => {
     element.textContent += '.';
 
-    if (element.textContent === '....') {
+    if (element.textContext === '....') {
       element.textContent = '';
     }
   }, 300)
@@ -44,7 +44,7 @@ function chatStripe(isAi, value, uniqueId) {
     `
       <div class="wrapper ${isAi && 'ai'}">
         <div class="chat">
-          <div className="profile">
+          <div class="profile">
             <img 
               src="${isAi ? bot : user}"
               alt="${isAi ? 'bot' : 'user'}"
@@ -75,10 +75,40 @@ const handleSubmit = async (e) => {
 
   const messageDiv = document.getElementById(uniqueId);
 
-  loader(messageDiv)
+  loader(messageDiv);
+
+  // fetch data from server -> bot's response
+
+  const response = await fetch('http://localhost:4000', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      prompt: data.get('prompt')
+    })
+  })
+
+  clearInterval(loadInterval);
+  messageDiv.innerHTML = '';
+
+  if(response.ok) {
+    const data = await response.json();
+    const parsedData = data.bot.trim();
+
+    console.log({parsedData})
+
+    typeText(messageDiv, parsedData)
+  } else {
+    const err = await response.text();
+
+    messageDiv.innerHTML = "something went wrong"
+
+    alert(err);
+  }
 }
 
-form.addEventListener('submit', handleSubmit)
+form.addEventListener('submit', handleSubmit);
 form.addEventListener('keyup', (e) => {
   if (e.keyCode === 13) {
     handleSubmit(e);
